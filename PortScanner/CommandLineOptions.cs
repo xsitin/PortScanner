@@ -10,20 +10,17 @@ namespace PortScanner
             Default = true)]
         public bool Tcp { get; set; }
 
-        [Option(shortName: 'u', longName: "upd", Required = false, HelpText = "scan udp", Default = false)]
-        public bool Upd { get; set; }
-
         public int BeginPort = 0;
         public int EndPort = 65535;
 
-        [Option(shortName: 'p', longName: "ports", Required = false, HelpText = "ports range for scan")]
+        [Option(shortName: 'p', longName: "ports", Required = true, HelpText = "ports range for scan")]
         public string Ports
         {
             set
             {
                 var values = value
-                    .Split(" ", StringSplitOptions.TrimEntries)
-                    .Select(x => int.Parse(x)).ToArray();
+                    .Split(" ", StringSplitOptions.RemoveEmptyEntries)
+                    .Select(x => int.Parse(x.Trim())).ToArray();
                 if (values.Length is > 2 or < 1 || values.Any(x => x is < 0 or > 65535))
                 {
                     Console.WriteLine("incorrect ports argument");
@@ -36,6 +33,6 @@ namespace PortScanner
             }
         }
 
-        [Value(0)] public string Ip { get; set; }
+        [Value(0, Required = true, MetaName = "Address", HelpText = "Host address")] public string Ip { get; set; }
     }
 }
