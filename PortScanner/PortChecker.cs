@@ -20,7 +20,7 @@ namespace PortScanner
             {
                 await client.ConnectAsync(Host, port);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }

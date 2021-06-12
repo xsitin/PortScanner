@@ -9,10 +9,7 @@ namespace PortScanner
     {
         static void Main(string[] args)
         {
-            CommandLineOptions options = null;
-            Parser.Default.ParseArguments<CommandLineOptions>(args)
-                .WithNotParsed(x => Environment.Exit(1))
-                .WithParsed(opt => options = opt);
+            var options = CommandLineOptions.ParseArgs(args);
 
             var checker = new PortChecker(options.Ip);
             var tasks = new List<Task<bool>>();
@@ -26,7 +23,7 @@ namespace PortScanner
                     if (tasks[i].Result)
                         Console.WriteLine($"TCP {i + options.BeginPort}");
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine("Error while checking...");
             }
