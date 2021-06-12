@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Net;
 using System.Text.RegularExpressions;
-using CommandLine;
 
 namespace PortScanner
 {
@@ -41,47 +38,60 @@ namespace PortScanner
             var argsQueue = new Queue<string>(args.Where(x => x != "-t"));
             {
                 if (argsQueue.Count < 1) PrintHelp();
-                var address = argsQueue.Dequeue().ToLowerInvariant();
-                //Проверка является ли адресс корректным url или ipv4
-                if (!(Regex.IsMatch(address,
-                          @"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$")
-                      ||
-                      Regex.IsMatch(address,
-                          @"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")))
-                {
-                    Console.WriteLine("Incorrect host address!");
-                }
+                var address = ParseAddress(argsQueue);
 
                 options.Ip = address;
             }
-            {
-                if (argsQueue.Dequeue() != "-p")
-                {
-                    Console.WriteLine("Ports not selected!");
-                    Environment.Exit(1);
-                }
+            ParsePorts(argsQueue, out var end, out var begin);
 
-                var begin = -1;
-                var end = -1;
-                if (!int.TryParse(argsQueue.Dequeue(), out begin) ||
-                    (argsQueue.Count > 0 && !int.TryParse(argsQueue.Dequeue(), out end)))
-                {
-                    Console.WriteLine("Port should be a number");
-                    Environment.Exit(1);
-                }
-
-                if (end != -1 && begin > end)
-                {
-                    Console.WriteLine("End port should be same or more than begin port!");
-                    Environment.Exit(1);
-                }
-
-                if (end != -1) options.EndPort = end;
-                options.BeginPort = begin;
-            }
+            if (end != -1) options.EndPort = end;
+            options.BeginPort = begin;
 
             return options;
         }
+
+        private static int ParsePorts(Queue<string> argsQueue, out int begin, out int end)
+        {
+            if (argsQueue.Dequeue() != "-p")
+            {
+                Console.WriteLine("Ports not selected!");
+                Environment.Exit(1);
+            }
+
+            begin = -1;
+            end = -1;
+            if (!int.TryParse(argsQueue.Dequeue(), out begin) ||
+                (argsQueue.Count > 0 && !int.TryParse(argsQueue.Dequeue(), out end)))
+            {
+                Console.WriteLine("Port should be a number");
+                Environment.Exit(1);
+            }
+
+            if (end != -1 && begin > end)
+            {
+                Console.WriteLine("End port should be same or more than begin port!");
+                Environment.Exit(1);
+            }
+
+            return begin;
+        }
+
+        private static string ParseAddress(Queue<string> argsQueue)
+        {
+            var address = argsQueue.Dequeue().ToLowerInvariant();
+            //Проверка является ли адресс корректным url или ipv4
+            if (!(Regex.IsMatch(address,
+                      @"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$")
+                  ||
+                  Regex.IsMatch(address,
+                      @"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")))
+            {
+                Console.WriteLine("Incorrect host address!");
+            }
+
+            return address;
+        }
+
 
         private static void PrintHelp()
         {
