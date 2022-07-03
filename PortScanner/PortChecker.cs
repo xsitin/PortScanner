@@ -12,7 +12,7 @@ namespace PortScanner
         {
             Host = host;
         }
-        
+
         public async Task<bool> CheckTcpAsync(int port)
         {
             var client = new TcpClient();

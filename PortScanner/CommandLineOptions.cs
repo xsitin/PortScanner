@@ -10,39 +10,19 @@ namespace PortScanner
         public int BeginPort = 0;
         public int EndPort = 65535;
 
-        public string Ports
-        {
-            set
-            {
-                var values = value
-                    .Split(" ", StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => int.Parse(x.Trim())).ToArray();
-                if (values.Length is > 2 or < 1 || values.Any(x => x is < 0 or > 65535))
-                {
-                    Console.WriteLine("incorrect ports argument");
-                    Environment.Exit(1);
-                }
-
-                BeginPort = values[0];
-                if (values.Length > 1)
-                    EndPort = values[1];
-            }
-        }
-
         public string Ip { get; set; }
 
         public static CommandLineOptions ParseArgs(string[] args)
         {
-            if (args.Any(x => x is "-h" or "--help")) PrintHelp();
+            if (args.Any(x => x is "-h" or "--help")) PrintHelp(0);
             var options = new CommandLineOptions();
-            var argsQueue = new Queue<string>(args.Where(x => x != "-t"));
+            var argsQueue = new Queue<string>(args);
             {
-                if (argsQueue.Count < 1) PrintHelp();
+                if (argsQueue.Count < 1) PrintHelp(1);
                 var address = ParseAddress(argsQueue);
-
                 options.Ip = address;
             }
-            ParsePorts(argsQueue, out var end, out var begin);
+            ParsePorts(argsQueue, out var begin, out var end);
 
             if (end != -1) options.EndPort = end;
             options.BeginPort = begin;
@@ -50,7 +30,7 @@ namespace PortScanner
             return options;
         }
 
-        private static int ParsePorts(Queue<string> argsQueue, out int begin, out int end)
+        private static void ParsePorts(Queue<string> argsQueue, out int begin, out int end)
         {
             if (argsQueue.Dequeue() != "-p")
             {
@@ -72,16 +52,13 @@ namespace PortScanner
                 Console.WriteLine("End port should be same or more than begin port!");
                 Environment.Exit(1);
             }
-
-            return begin;
         }
 
         private static string ParseAddress(Queue<string> argsQueue)
         {
             var address = argsQueue.Dequeue().ToLowerInvariant();
             //Проверка является ли адресс корректным url или ipv4
-            if (!(Regex.IsMatch(address,
-                      @"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$")
+            if (!(Regex.IsMatch(address, @"^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$")
                   ||
                   Regex.IsMatch(address,
                       @"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$")))
@@ -93,12 +70,12 @@ namespace PortScanner
         }
 
 
-        private static void PrintHelp()
+        private static void PrintHelp(int exitCode)
         {
-            Console.WriteLine(@"Its script for check tcp port.
+            Console.WriteLine(@"Script for check tcp port.
             Usage: PortScanner.exe *address* -p *begin port* [end port]
                 default end port is 65535");
-            Environment.Exit(1);
+            Environment.Exit(exitCode);
         }
     }
 }
